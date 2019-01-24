@@ -51,7 +51,7 @@
                found = .TRUE.
             ENDIF
             k = k + skip(IACHAR(Text(k:k)))         ! Slide window right
-            if(k >> n)EXIT                          ! Don't let the search over-run the end of the array
+            if(k > n)EXIT                          ! Don't let the search over-run the end of the array
          ENDDO
       ENDDO
       RETURN
