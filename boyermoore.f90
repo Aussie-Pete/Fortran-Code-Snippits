@@ -1,58 +1,81 @@
-!   Boyer-Moore Horspool algorithm in Fortran
-!   Written by Peter Kelly
-!   Released under GPL V3 license
-!   Enjoy it's use and feedback any issues to Aussie-Pete on Github
+       MODULE bm
+       IMPLICIT NONE
+       PUBLIC  ::  boyermoore
 !
-      INTEGER FUNCTION BOYERMOORE(Text,Pat,Siztext,Sizpat) RESULT(SEARCH)
-      IMPLICIT NONE
+! PARAMETER definitions
+!
+       INTEGER , PRIVATE , PARAMETER  ::  no_of_chars = 256
+!
+       CONTAINS
+!
+       SUBROUTINE badcharheuristic(Str , Sizex , Badchar)
+       IMPLICIT NONE
 !
 ! Dummy arguments
 !
-      CHARACTER(*)  ::  Pat
-      INTEGER  ::  Sizpat
-      INTEGER  ::  Siztext
-      CHARACTER(*)  ::  Text
-      INTENT (IN) Pat, Sizpat, Siztext, Text
+       INTEGER  ::  Sizex
+       INTEGER , DIMENSION(0:*)  ::  Badchar
+       CHARACTER(1) , DIMENSION(0:*)  ::  Str
+       INTENT (IN) Sizex , Str
+       INTENT (OUT) Badchar
 !
 ! Local variables
 !
-      LOGICAL  ::  found
-      INTEGER  ::  i
-      INTEGER  ::  j
-      INTEGER  ::  k
-      INTEGER  ::  maxchar
-      INTEGER, DIMENSION(0:Siztext)  ::  skip
+       INTEGER  ::  i
+
+! Code starts here                                                      
  
-!Code starts here
-      maxchar = Siztext
-      found = .FALSE.
-      SEARCH = 0
-      IF(Sizpat==0)THEN                             ! Nothing to search for
-         SEARCH = 1
-         found = .TRUE.
-      ENDIF
-      skip(0:maxchar) = Sizpat
-      DO k = 1, Sizpat - 1                          ! Setup the shift sizes
-         skip(IACHAR(Pat(k:k))) = Sizpat - k
-      ENDDO
-      k = Sizpat
-      DO WHILE ((.NOT.found) .AND. (k<=Siztext))    ! Scan
-         i = k
-         j = Sizpat
-         DO WHILE (j>=1)                            ! Match the characters in substring
-            IF(Text(i:i)/=Pat(j:j))THEN
-               j = -1
-            ELSE
-               j = j - 1
-               i = i - 1
-            ENDIF
-            IF(j==0)THEN                            ! Found 
-               SEARCH = i + 1
-               found = .TRUE.
-            ENDIF
-            k = k + skip(IACHAR(Text(k:k)))         ! Slide window right
-            if(k > n)EXIT                          ! Don't let the search over-run the end of the array
-         ENDDO
-      ENDDO
-      RETURN
-      END FUNCTION BOYERMOORE
+       DO i = 0 , no_of_chars - 1
+           Badchar(i) = -1
+       END DO
+ 
+       DO i = 0 , Sizex - 1
+           Badchar(iachar(Str(i))) = i
+       END DO
+ 
+       RETURN
+       END SUBROUTINE badcharheuristic
+ 
+       FUNCTION boyermoore(Pat , M , Str , N) RESULT(found)
+ 
+       IMPLICIT NONE
+!
+! Dummy arguments
+!
+       INTEGER  ::  M , N
+       CHARACTER(1) , DIMENSION(0:N)  ::  Pat , Str
+       INTENT (IN) N , Str
+!
+! Local variables
+!
+       INTEGER , DIMENSION(N)  ::  arr
+       INTEGER , DIMENSION(0:no_of_chars-1)  ::  badchar
+       INTEGER  ::  found
+       INTEGER  ::  i , j , s
+!$omp declare simd(boyermoore)
+ 
+!
+! Code starts here                                                      
+!
+       badchar = 0
+       CALL badcharheuristic(Pat , M , badchar)
+       arr = 0
+       i = 0
+       s = 0
+       DO WHILE ( s<=(N - M) )
+           j = M - 1
+           DO WHILE  ((j>=0).and.(Pat(j)==Str(s + j) ))
+                    j = j - 1
+                    if (j.lt.0)exit
+           END DO
+           IF( j < 0 )THEN
+               found = s + 1
+               RETURN
+           ELSE
+               s = s + max(1 , j - badchar(iachar(Str(s + j))))
+           END IF
+       END DO
+       found = -1
+       RETURN
+       END FUNCTION boyermoore
+       END MODULE bm
