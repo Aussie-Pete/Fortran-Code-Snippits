@@ -1,81 +1,80 @@
-       MODULE bm
-       IMPLICIT NONE
-       PUBLIC  ::  boyermoore
+       module bm_fort
+       implicit none
+       private
+       public  ::  bmfort
 !
 ! PARAMETER definitions
 !
-       INTEGER , PRIVATE , PARAMETER  ::  no_of_chars = 256
+       integer , private , parameter  ::  NO_OF_CHARS = 256, SIZEX=256
 !
-       CONTAINS
+       contains
 !
-       SUBROUTINE badcharheuristic(Str , Sizex , Badchar)
-       IMPLICIT NONE
-!
+       pure subroutine badcharheuristic(Str,Sizex,Badchar)
+       implicit none
 ! Dummy arguments
 !
-       INTEGER  ::  Sizex
-       INTEGER , DIMENSION(0:*)  ::  Badchar
-       CHARACTER(1) , DIMENSION(0:*)  ::  Str
-       INTENT (IN) Sizex , Str
-       INTENT (OUT) Badchar
+       integer  ::  Sizex
+       integer , dimension(0:NO_OF_CHARS-1)  ::  Badchar
+       character(1) , dimension(0:Sizex)  ::  Str
+       intent (in) Sizex , Str
+       intent (out) Badchar
 !
 ! Local variables
 !
-       INTEGER  ::  i
-
-! Code starts here                                                      
+       integer  ::  i
+! Code starts here
+        Badchar(0:NO_OF_CHARS - 1) = -1
  
-       DO i = 0 , no_of_chars - 1
-           Badchar(i) = -1
-       END DO
- 
-       DO i = 0 , Sizex - 1
+       do i = 0 , Sizex - 1
            Badchar(iachar(Str(i))) = i
-       END DO
+       enddo
+       return
+       end subroutine badcharheuristic
  
-       RETURN
-       END SUBROUTINE badcharheuristic
- 
-       FUNCTION boyermoore(Pat , M , Str , N) RESULT(found)
- 
-       IMPLICIT NONE
+        function bmfort(Pat,M,Str,N) result(found)
+       implicit none
 !
 ! Dummy arguments
 !
-       INTEGER  ::  M , N
-       CHARACTER(1) , DIMENSION(0:N)  ::  Pat , Str
-       INTENT (IN) N , Str
+       integer  ::  M
+       integer  ::  N
+       character(len=m)   ::  Pat
+       character(len=n)   ::  Str
+       intent (in) M , N , Pat , Str
 !
 ! Local variables
 !
-       INTEGER , DIMENSION(N)  ::  arr
-       INTEGER , DIMENSION(0:no_of_chars-1)  ::  badchar
-       INTEGER  ::  found
-       INTEGER  ::  i , j , s
-!$omp declare simd(boyermoore)
- 
+       integer , dimension(N)  ::  arr
+       integer , dimension(NO_OF_CHARS)  ::  badchar
+       integer  ::  found
+       integer  ::  i
+       integer  ::  j
+       integer  ::  s
 !
-! Code starts here                                                      
+!$omp declare simd(bmfort)
 !
+! Code starts here
+!
+       found = -1
+       if ( (M==0) .OR. (N==0) .OR. (M>N) ) return
        badchar = 0
-       CALL badcharheuristic(Pat , M , badchar)
+       call badcharheuristic(Pat,M,badchar)
        arr = 0
        i = 0
        s = 0
-       DO WHILE ( s<=(N - M) )
-           j = M - 1
-           DO WHILE  ((j>=0).and.(Pat(j)==Str(s + j) ))
-                    j = j - 1
-                    if (j.lt.0)exit
-           END DO
-           IF( j < 0 )THEN
-               found = s + 1
-               RETURN
-           ELSE
-               s = s + max(1 , j - badchar(iachar(Str(s + j))))
-           END IF
-       END DO
+       do while ( s<=(N-M) )
+           j = M
+           do while ( (j >= 1) .AND. (Pat(j:j) == Str(s+j:s+j)) )
+               j = j - 1
+               if ( j < 1 ) then
+                   found = s + 1
+                   return
+               endif
+           enddo
+           i = badchar(iachar(Str(s+j:s+j)))
+           s = s + (j-i)
+       enddo
        found = -1
-       RETURN
-       END FUNCTION boyermoore
-       END MODULE bm
+       return
+       end function bmfort
+       end module bm_fort
