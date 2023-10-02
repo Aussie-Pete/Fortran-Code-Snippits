@@ -1,0 +1,54 @@
+!The calculations in the NOAA Sunrise/Sunset and Solar Position Calculators are based on equations
+!from Astronomical Algorithms, by Jean Meeus. NOAA also included atmospheric refraction effects. The sunrise and sunset results 
+!were reported by NOAA to be accurate to within +/- 1 minute for locations between +/- 72° latitude, and within ten minutes 
+!outside of those latitudes.
+
+!This FORTRAN translation was tested for selected locations and found to provide results identical the original NOAA &
+!Excel VBA code.
+
+!For sunrise and sunset calculations, we assume 0.833° of atmospheric refraction.
+!In the solar position functions, atmospheric refraction is modeled using equations documented at 
+!    http://www.srrb.noaa.gov/highlights/sunrise/calcdetails.html
+
+!This FORTRAN translation does not include calculation of prior or next sunsets for locations
+! above the Arctic Circle and below the Antarctic Circle, when a sunrise or sunset does not occur.
+
+!Translated from NOAA's Javascript to Excel VBA by:
+
+!Greg Pelletier
+!Department of Ecology
+!P.O. Box 47710
+!Olympia, WA 98504-7710
+!phone: 360-407-6485
+!fax: 360-407-6884
+!e-mail: gpel461@ecy.wa.gov
+!
+!Translation to Fortran 90 by:
+!Peter Kelly
+!e-mail: peter.kelly@acm.org
+!Original comments are retained
+
+Calculates the Solar Azimuth for a given lat/long and the Sun's elevation.
+!NOTE: Seven functions are available for use from Excel worksheets:
+!   - sunrise(lat, lon, year, month, day, timezone, dlstime)
+!   - solarnoon(lat, lon, year, month, day, timezone, dlstime)
+!   - sunset(lat, lon, year, month, day, timezone, dlstime)
+!   - dusk(lat, lon, year, month, day, timezone, dlstime, solardepression)
+!   - solarazimuth(lat, lon, year, month, day, hour, minute, second, timezone, dlstime)
+!   - solarelevation(lat, lon, year, month, day, hour, minute, second, timezone, dlstime)
+!where
+!   lat = latidude in degrees
+!   lon = longitude in degrees
+!   timezone = time zone in hours relative to GMT/UTC
+!   dlstime = daylight savings time hours
+!                 (0 for no daylight savings, or 1 for yes daylight savings)
+!   solardepression = angle of the sun below the horizon in degrees
+!                 for calculation of time of dawn and dusk
+ 
+!The sign convention for inputs to the functions named sunrise, solarnoon, sunset, dawn, dusk, solarazimuth, and solarelevation is:
+ 
+!   - positive latitude decimal degrees for northern hemisphere
+!   - negative longitude degrees for western hemisphere
+!   - negative time zone hours for western hemisphere!
+!   - dawn(lat, lon, year, month, day, timezone, dlstime, solardepression)
+!
